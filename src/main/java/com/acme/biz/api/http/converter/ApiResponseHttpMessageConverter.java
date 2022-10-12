@@ -1,6 +1,9 @@
 package com.acme.biz.api.http.converter;
 
+import com.acme.biz.api.ApiRequest;
 import com.acme.biz.api.ApiResponse;
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,8 +20,10 @@ import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * @author qi.li
@@ -31,6 +36,14 @@ public class ApiResponseHttpMessageConverter extends AbstractGenericHttpMessageC
 
     public ApiResponseHttpMessageConverter(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
+        setSupportedMediaTypes(List.of(
+                MediaType.APPLICATION_JSON,
+                MediaType.valueOf("application/*+json")));
+    }
+
+    @Override
+    protected boolean supports(Class<?> clazz) {
+        return clazz.isAssignableFrom(ApiRequest.class);
     }
 
     @Override
@@ -43,6 +56,12 @@ public class ApiResponseHttpMessageConverter extends AbstractGenericHttpMessageC
 
     @Override
     protected void writeInternal(Object o, Type type, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException {
+        ApiRequest apiRequest = (ApiRequest) o;
+        Object body = apiRequest.getBody();
+        OutputStream outputStream = StreamUtils.nonClosing(outputMessage.getBody());
+        JsonEncoding encoding = JsonEncoding.UTF8;
+        JsonGenerator generator = objectMapper.getFactory().createGenerator(outputStream, encoding);
+        objectMapper.writer().writeValue(generator, body);
     }
 
     @Override

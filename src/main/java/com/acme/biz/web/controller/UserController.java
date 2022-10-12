@@ -3,6 +3,7 @@ package com.acme.biz.web.controller;
 import com.acme.biz.api.entity.User;
 import com.acme.biz.api.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/user")
 public class UserController {
     @PostMapping(value = "/register/v3")
-    public Boolean register(User user) {
+    public Boolean register(@RequestBody User user) {
+        System.out.println(user);
         return Boolean.TRUE;
     }
 }

@@ -1,5 +1,6 @@
 package com.acme.biz.api.service;
 
+import com.acme.biz.api.ApiRequest;
 import com.acme.biz.api.ApiResponse;
 import com.acme.biz.api.entity.User;
 import com.acme.biz.api.feign.interceptor.ApiCompatibleInterceptor;
@@ -39,21 +40,35 @@ public class UserServiceTest {
     public void should_use_current_client_api() {
         User user = new User();
         user.setId(1L);
-        user.setName("张三");
+        user.setName("张三_v3");
         Boolean result = userApi.register(user);
 
         assertTrue(result);
     }
 
     @Test
-    public void should_use_past_client_api() {
+    public void should_use_past_client_api_v2() {
         User user = new User();
         user.setId(1L);
-        user.setName("张三");
-        ApiResponse<Boolean> response = userPastApi.register(user);
+        user.setName("张三_v2");
+        ApiResponse<Boolean> response = userPastApi.register_v2(user);
 
         assertTrue(response.getBody());
     }
+
+    @Test
+    public void should_use_past_client_api_v1() {
+        User user = new User();
+        user.setId(1L);
+        user.setName("张三_v1");
+
+        ApiRequest<User> userRequest = new ApiRequest<>();
+        userRequest.setBody(user);
+        ApiResponse<Boolean> response = userPastApi.register_v1(userRequest);
+
+        assertTrue(response.getBody());
+    }
+
 
     @FeignClient(name = "user-service", url = "http://localhost:8080")
     interface UserApi {
@@ -65,7 +80,10 @@ public class UserServiceTest {
     @FeignClient(name = "user-service-past", url = "http://localhost:8080")
     interface UserPastApi {
         @PostMapping(value = "/api/user/register/v2")
-        ApiResponse<Boolean> register(@RequestBody User user);
+        ApiResponse<Boolean> register_v2(@RequestBody User user);
+
+        @PostMapping(value = "/api/user/register/v1")
+        ApiResponse<Boolean> register_v1(@RequestBody ApiRequest<User> user);
     }
 
     @EnableAutoConfiguration
@@ -76,7 +94,7 @@ public class UserServiceTest {
         public ApiCompatibleInterceptor apiCompatibleInterceptor() {
             ApiCompatibleInterceptor apiCompatibleInterceptor = new ApiCompatibleInterceptor();
             apiCompatibleInterceptor.addApiCompat(new ApiCompatibleInterceptor.ApiCompat("user-service", "/api/user/register",
-                    "v3", List.of("v2")));
+                    "v3", List.of("v2","v1")));
             return apiCompatibleInterceptor;
         }
 
